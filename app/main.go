@@ -1,17 +1,20 @@
 package main
 
 import (
-	"database/sql"
 	"fmt"
 	"log"
-	"net/url"
 	"os"
 	"strconv"
 	"time"
 
 	_ "github.com/go-sql-driver/mysql"
 	"github.com/labstack/echo/v4"
+	"gorm.io/driver/mysql"
+	"gorm.io/gorm"
 
+	"github.com/bxcodec/go-clean-arch/bmi"
+	"github.com/bxcodec/go-clean-arch/internal/repository"
+	"github.com/bxcodec/go-clean-arch/internal/rest"
 	"github.com/bxcodec/go-clean-arch/internal/rest/middleware"
 	"github.com/joho/godotenv"
 )
@@ -35,27 +38,14 @@ func main() {
 	dbUser := os.Getenv("DATABASE_USER")
 	dbPass := os.Getenv("DATABASE_PASS")
 	dbName := os.Getenv("DATABASE_NAME")
-	connection := fmt.Sprintf("%s:%s@tcp(%s:%s)/%s", dbUser, dbPass, dbHost, dbPort, dbName)
-	val := url.Values{}
-	val.Add("parseTime", "1")
-	val.Add("loc", "Asia/Jakarta")
-	dsn := fmt.Sprintf("%s?%s", connection, val.Encode())
-	dbConn, err := sql.Open(`mysql`, dsn)
+
+	dsn := "%v:%v@tcp(%v:%v)/%v?charset=utf8mb4&parseTime=True%v&timeout=5s"
+	dial := mysql.Open(fmt.Sprintf(dsn, dbUser, dbPass, dbHost, dbPort, dbName, "&loc=Asia%2FBangkok"))
+
+	db, err := gorm.Open(dial)
 	if err != nil {
 		log.Fatal("failed to open connection to database", err)
 	}
-	err = dbConn.Ping()
-	if err != nil {
-		log.Fatal("failed to ping database ", err)
-	}
-
-	defer func() {
-		err := dbConn.Close()
-		if err != nil {
-			log.Fatal("got error when closing the DB connection", err)
-		}
-	}()
-	// prepare echo
 
 	e := echo.New()
 	e.Use(middleware.CORS)
@@ -67,6 +57,10 @@ func main() {
 	}
 	timeoutContext := time.Duration(timeout) * time.Second
 	e.Use(middleware.SetRequestContextWithTimeout(timeoutContext))
+
+	bmiRepository := repository.NewBmiRepository(db)
+	bmiService := bmi.NewBmiService(bmiRepository)
+	rest.NewBmiHandler(e, bmiService)
 
 	// Start Server
 	address := os.Getenv("SERVER_ADDRESS")
