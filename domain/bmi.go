@@ -7,10 +7,12 @@ type (
 	}
 
 	BmiCondition struct {
-		BmiId     string  `json:"bmi_id" gorm:"bmi_id"`
-		Min       float64 `json:"min" gorm:"min"`
-		Max       float64 `json:"max" gorm:"max"`
-		BmiDesc   string  `json:"bmi_desc" gorm:"bmi_desc"`
-		BmiAdvice string  `json:"bmi_advice" gorm:"bmi_advice"`
+		Id           int     `json:"-" gorm:"id"`
+		Bmi          float64 `json:"bmi" gorm:"-"`
+		CategoryName string  `json:"category_name" gorm:"category_name"`
+		Min          float64 `json:"-" gorm:"min"`
+		Max          float64 `json:"-" gorm:"max"`
+		BmiDesc      string  `json:"bmi_desc" gorm:"bmi_desc"`
+		BmiAdvice    string  `json:"bmi_advice" gorm:"bmi_advice"`
 	}
 )

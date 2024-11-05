@@ -39,7 +39,7 @@ func main() {
 	dbPass := os.Getenv("DATABASE_PASS")
 	dbName := os.Getenv("DATABASE_NAME")
 
-	dsn := "%v:%v@tcp(%v:%v)/%v?charset=utf8mb4&parseTime=True%v&timeout=5s"
+	dsn := "%v:%v@tcp(%v:%v)/%v?charset=utf8mb4&parseTime=True%v&timeout=20s"
 	dial := mysql.Open(fmt.Sprintf(dsn, dbUser, dbPass, dbHost, dbPort, dbName, "&loc=Asia%2FBangkok"))
 
 	db, err := gorm.Open(dial)
