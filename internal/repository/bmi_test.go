@@ -35,43 +35,35 @@ func TestFindBmiCondition(t *testing.T) {
 
 	mockBmiConditions := []domain.BmiCondition{
 		{
-			BmiId:     "1",
-			Min:       0,
-			Max:       18.4,
-			BmiDesc:   "ผอมเกินไป",
-			BmiAdvice: "น้ำหนักน้อยกว่าปกติ อาจเสี่ยงต่อการได้รับสารอาหารไม่เพียงพอ ควรรับประทานอาหารเพียงพอ และออกกำลังกายเสริมสร้างกล้ามเนื้อเพื่อเพิ่มค่า BMI",
-		},
-		{
-			BmiId:     "2",
-			Min:       18.5,
-			Max:       24.9,
-			BmiDesc:   "น้ำหนักปกติ เหมาะสม",
-			BmiAdvice: "น้ำหนักที่เหมาะสมสำหรับคนไทยคือค่า BMI ระหว่าง 18.5-24 ควรรักษาระดับ BMI ให้อยู่ในช่วงนี้ให้นานที่สุด และตรวจสุขภาพทุกปี",
+			Id:           2,
+			CategoryName: "อ้วน",
+			Min:          25.0,
+			Max:          29.9,
+			BmiDesc:      "อ้วนในระดับหนึ่ง ถึงแม้จะไม่ถึงเกณฑ์ที่ถือว่าอ้วนมาก ๆ แต่ก็ยังมีความเสี่ยงต่อการเกิดโรค",
+			BmiAdvice:    "ควรปรับพฤติกรรมการทานอาหาร ออกกำลังกาย และตรวจสุขภาพ",
 		},
 	}
 
-	rows := sqlmock.NewRows([]string{"bmi_id", "min", "max", "bmi_desc", "bmi_advice"}).
+	valueFilter := 20.0
+
+	rows := sqlmock.NewRows([]string{"id", "category_name", "min", "max", "bmi_desc", "bmi_advice"}).
 		AddRow(
-			mockBmiConditions[0].BmiId, mockBmiConditions[0].Min, mockBmiConditions[0].Max,
-			mockBmiConditions[0].BmiDesc, mockBmiConditions[0].BmiAdvice,
-		).
-		AddRow(
-			mockBmiConditions[0].BmiId, mockBmiConditions[0].Min, mockBmiConditions[0].Max,
+			mockBmiConditions[0].Id, mockBmiConditions[0].CategoryName, mockBmiConditions[0].Min, mockBmiConditions[0].Max,
 			mockBmiConditions[0].BmiDesc, mockBmiConditions[0].BmiAdvice,
 		)
 
-	query := "SELECT bmi_id, min, max, bmi_desc, bmi_advice from bmi_condition WHERE \\? between min and max"
+	query := "select id, category_name, min, max, bmi_desc, bmi_advice from bmi_condition where \\(min is not null and max is not null and \\? between min and max\\) or \\(min is null and \\? < max\\) or \\(max is null and \\? > min\\)"
 
-	mock.ExpectQuery(query).WithArgs(sqlmock.AnyArg()).WillReturnRows(rows)
+	mock.ExpectQuery(query).WithArgs(valueFilter, valueFilter, valueFilter).WillReturnRows(rows)
 
 	bmiRepository := repository.NewBmiRepository(db)
-	result, err := bmiRepository.FindBmiCondition(20.0)
+	result, err := bmiRepository.FindBmiCondition(valueFilter)
 	if err != nil {
-		t.Fatalf("unexpected error: %s", err)
+		t.Fatalf("FindBmiCondition unexpected error: %s", err)
 	}
 
-	expected := mockBmiConditions[1]
-	if result.BmiId != expected.BmiId || result.BmiDesc != expected.BmiDesc {
+	expected := mockBmiConditions[0]
+	if result.Id != expected.Id || result.BmiDesc != expected.BmiDesc {
 		t.Errorf("unexpected result: got %+v, want %+v", result, expected)
 	}
 
