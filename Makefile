@@ -2,7 +2,7 @@
 MYSQL_USER ?= user
 MYSQL_PASSWORD ?= password
 MYSQL_ADDRESS ?= 127.0.0.1:3306
-MYSQL_DATABASE ?= article
+MYSQL_DATABASE ?= bmi
 
 # Exporting bin folder to the path for makefile
 export PATH   := $(PWD)/bin:$(PATH)
